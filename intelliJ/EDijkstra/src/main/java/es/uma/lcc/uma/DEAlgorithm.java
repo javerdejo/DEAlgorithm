@@ -9,15 +9,13 @@ import java.util.List;
 
 class DEAlgorithm  extends AbstractDoubleProblem {
     private int numberOfVariables;
-    private final double lower = -10.0;
-    private final double upper = 10.0;
+    private double lower;
+    private double upper;
 
-    public DEAlgorithm() {
-        this(2);
-    }
-
-    public DEAlgorithm(int numberOfVariables) {
+    DEAlgorithm(int numberOfVariables, double lower, double upper) {
         this.numberOfVariables = numberOfVariables;
+        this.lower = lower;
+        this.upper = upper;
 
         setNumberOfVariables(numberOfVariables);    // número de variables (dimensiones)
         setNumberOfObjectives(1);                   // Problema monoobjetivo
@@ -52,11 +50,15 @@ class DEAlgorithm  extends AbstractDoubleProblem {
 
         // Calculo el valor de fitness (x^2)
         for (int var = 0; var < solution.getNumberOfVariables(); var++) {
-            fx += x[var] * x[var];
+            // Llamar a la simulación de N rutas con marcos de tamaño x[0] + x[1]
+            // y obtener como resultado el tiempo medio que tarda en realizarse la
+            // asignación de rutas
+
+            // 'fx' debe almacenar el tiempo promedio
+            fx += x[var] * x[var]; // <-- Cambiar por llamada al simulador
         }
 
-        // Asigno el valor de la función de fitness al primer objetivo ya que se trata
-        // de un problema mono-objetico
+        // Asigno el valor de la función de fitness
         solution.setObjective(0, fx);
     }
 
@@ -64,5 +66,4 @@ class DEAlgorithm  extends AbstractDoubleProblem {
     public DoubleSolution createSolution() {
         return new DefaultDoubleSolution(this);
     }
-
 }

@@ -20,7 +20,7 @@ public class Main {
     private static final int DEFAULT_NUMBER_OF_CORES = 1 ;
 
     public static void main(String[] args) {
-        DoubleProblem problem = new DEAlgorithm(2);
+        DoubleProblem problem = new DEAlgorithm(2, -10, 10);
         Algorithm<DoubleSolution> algorithm;
         DifferentialEvolutionSelection selection;
         DifferentialEvolutionCrossover crossover;
