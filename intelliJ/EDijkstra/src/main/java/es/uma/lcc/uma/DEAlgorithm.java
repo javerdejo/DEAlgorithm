@@ -19,7 +19,7 @@ class DEAlgorithm  extends AbstractDoubleProblem {
 
         setNumberOfVariables(numberOfVariables);    // número de variables (dimensiones)
         setNumberOfObjectives(1);                   // Problema monoobjetivo
-        setName("Sphere Problem");                  // Nombre del problema
+        setName("TDDSP");                           // Nombre del problema
 
         List<Double> lowerLimit = new ArrayList<Double>();
         List<Double> upperLimit = new ArrayList<Double>();
