@@ -1,43 +1,50 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-    <modelVersion>4.0.0</modelVersion>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
 
-    <groupId>es.uma.lcc.neo</groupId>
-    <artifactId>EDijkstra</artifactId>
-    <version>1.0</version>
-    <dependencies>
-        <!-- https://mvnrepository.com/artifact/org.uma.jmetal/jmetal-core -->
-        <dependency>
-            <groupId>org.uma.jmetal</groupId>
-            <artifactId>jmetal-core</artifactId>
-            <version>5.0</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/org.uma.jmetal/jmetal-problem -->
-        <dependency>
-            <groupId>org.uma.jmetal</groupId>
-            <artifactId>jmetal-problem</artifactId>
-            <version>5.0</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/org.uma.jmetal/jmetal-algorithm -->
-        <dependency>
-            <groupId>org.uma.jmetal</groupId>
-            <artifactId>jmetal-algorithm</artifactId>
-            <version>5.0</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/org.uma.jmetal/jmetal-exec -->
-        <dependency>
-            <groupId>org.uma.jmetal</groupId>
-            <artifactId>jmetal-exec</artifactId>
-            <version>5.0</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/org.uma.jmetal/jmetal -->
-        <dependency>
-            <groupId>org.uma.jmetal</groupId>
-            <artifactId>jmetal</artifactId>
-            <version>5.0</version>
-        </dependency>
-    </dependencies>
+	<groupId>es.uma.lcc.neo</groupId>
+	<artifactId>EDijkstra</artifactId>
+	<version>1.0</version>
+
+	<properties>
+		<jmetal.version>5.0</jmetal.version>
+		<iblue.service.version>1.0.2-RELEASE</iblue.service.version>
+	</properties>
+	<dependencies>
+		<!-- https://mvnrepository.com/artifact/org.uma.jmetal/jmetal-core -->
+		<dependency>
+			<groupId>org.uma.jmetal</groupId>
+			<artifactId>jmetal-core</artifactId>
+			<version>${jmetal.version}</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.uma.jmetal/jmetal-problem -->
+		<dependency>
+			<groupId>org.uma.jmetal</groupId>
+			<artifactId>jmetal-problem</artifactId>
+			<version>${jmetal.version}</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.uma.jmetal/jmetal-algorithm -->
+		<dependency>
+			<groupId>org.uma.jmetal</groupId>
+			<artifactId>jmetal-algorithm</artifactId>
+			<version>${jmetal.version}</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.uma.jmetal/jmetal-exec -->
+		<dependency>
+			<groupId>org.uma.jmetal</groupId>
+			<artifactId>jmetal-exec</artifactId>
+			<version>${jmetal.version}</version>
+		</dependency>
+		<!-- https://mvnrepository.com/artifact/org.uma.jmetal/jmetal <dependency> 
+			<groupId>org.uma.jmetal</groupId> <artifactId>jmetal</artifactId> <version>${jmetal.version}</version> 
+			</dependency> -->
+		<dependency>
+			<groupId>com.iblue</groupId>
+			<artifactId>service</artifactId>
+			<version>${iblue.service.version}</version>
+		</dependency>
+		
+	</dependencies>
 
 </project>
