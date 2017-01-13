@@ -1,1 +1,5 @@
 /target/
+/range-results.csv
+/route-results.csv
+/routing-results.csv
+/tile-comp-results.csv

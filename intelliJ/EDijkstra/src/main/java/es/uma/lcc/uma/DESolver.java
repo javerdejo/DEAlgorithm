@@ -22,7 +22,10 @@ import com.iblue.utils.Log.LogLevel;
 import com.iblue.utils.Pair;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -32,8 +35,11 @@ import static org.uma.jmetal.runner.AbstractAlgorithmRunner.printFinalSolutionSe
 
 public class DESolver {
 	private static final int DEFAULT_NUMBER_OF_CORES = 1;
-	private static final int MAX_EVALUATIONS = 1 ; //250000;
-	private static final int POP_SIZE = 1;
+	private static final int MAX_EVALUATIONS = 500 ; //250000;
+	private static final int POP_SIZE = 5;
+	
+	private static final String OUTPUT_FILE_RANGE = "tile-comp-results.csv";
+	private static final String OUTPUT_FILE_ROUTE = "routing-results.csv";
 
 	private static List<Pair<GeoStreetInterface, GeoStreetInterface>> getOrigDests(List<Pair<Float, Float>> pairsSpot) {
 		List<GeoStreetInterface> spots = new ArrayList<GeoStreetInterface>();
@@ -79,13 +85,39 @@ public class DESolver {
 	}
 
 	public static void main(String[] args) throws IOException {
-		Log.setLogLevel(LogLevel.DEBUG);
+		Log.setLogLevel(LogLevel.INFO);
 		List<Pair<Float, Float>> pairs = loadSpots("spots-malaga.txt");
 		List<Pair<GeoStreetInterface, GeoStreetInterface>> origDests = getOrigDests(pairs);
+		BufferedWriter routeWriter = null;
+		BufferedWriter rangeWriter = null;
+		
+		try {
+			File file = new File(OUTPUT_FILE_RANGE);
+			if (!file.exists()) {
+				file.createNewFile();
+			}
+			FileWriter fw = new FileWriter(file, false);
+			rangeWriter = new BufferedWriter(fw);
+			rangeWriter.write("latRange;lonRange;buildtime\n");
+			rangeWriter.flush();
+			
+			file = new File(OUTPUT_FILE_ROUTE);
+			if (!file.exists()) {
+				file.createNewFile();
+			}
+			fw = new FileWriter(file, false);
+			routeWriter = new BufferedWriter(fw);
+			routeWriter.write("latRange;lonRange;totaltime;searchtime;fitnesstime;found\n");
+			routeWriter.flush();
+
+		} catch (IOException e) {
+			Log.error("Something happen with file " + OUTPUT_FILE_RANGE);
+			e.printStackTrace();
+		}
 
 		// 5.0d ~ 5,000 tiles for whole world
 		// 0.001 ~ 68,719,476,736 tiles for whole world
-		DoubleProblem problem = new TDDSProblem(2, 0.001d, 5.0d, origDests);
+		DoubleProblem problem = new TDDSProblem(2, 0.01d, 5.0d, origDests, routeWriter, rangeWriter);
 		Algorithm<DoubleSolution> algorithm;
 		DifferentialEvolutionSelection selection;
 		DifferentialEvolutionCrossover crossover;
@@ -122,5 +154,14 @@ public class DESolver {
 		Log.debug("Time: " + computingTime);
 
 		evaluator.shutdown();
+		
+		try {
+			routeWriter.close();
+			rangeWriter.close();
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+		
+		System.exit(0);
 	}
 }

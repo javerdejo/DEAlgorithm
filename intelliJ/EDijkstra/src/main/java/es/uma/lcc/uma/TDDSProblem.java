@@ -5,6 +5,7 @@ import org.uma.jmetal.solution.DoubleSolution;
 import org.uma.jmetal.solution.impl.DefaultDoubleSolution;
 
 import com.iblue.model.GeoStreetInterface;
+import com.iblue.model.IntersectionInterface;
 import com.iblue.model.db.service.TileService;
 import com.iblue.path.AlgorithmInterface;
 import com.iblue.path.Dijkstra;
@@ -12,21 +13,28 @@ import com.iblue.path.GraphInterface;
 import com.iblue.utils.Log;
 import com.iblue.utils.Pair;
 
+import java.io.BufferedWriter;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 class TDDSProblem extends AbstractDoubleProblem {
 
 	private static final long serialVersionUID = -6718380720330242163L;
+	private static final long PENALTY = 20000;
 	private int numberOfVariables;
 	private double lower;
 	private double upper;
-	private TileService tileService;
+	//private TileService tileService;
 	private List<Pair<GeoStreetInterface, GeoStreetInterface>> origDests;
+	private BufferedWriter routeWriter;
+	private BufferedWriter rangeWriter;
 
-	TDDSProblem(int numberOfVariables, double lower, double upper,
-			List<Pair<GeoStreetInterface, GeoStreetInterface>> origDests) {
+	public TDDSProblem(int numberOfVariables, double lower, double upper,
+			List<Pair<GeoStreetInterface, GeoStreetInterface>> origDests, BufferedWriter routeWriter,
+			BufferedWriter rangeWriter) {
 		this.numberOfVariables = numberOfVariables;
 		this.setLower(lower);
 		this.upper = upper;
@@ -49,7 +57,10 @@ class TDDSProblem extends AbstractDoubleProblem {
 		setLowerLimit(lowerLimit);
 		setUpperLimit(upperLimit);
 
-		tileService = new TileService();
+		//tileService = new TileService();
+
+		this.rangeWriter = rangeWriter;
+		this.routeWriter = routeWriter;
 	}
 
 	public void evaluate(DoubleSolution solution) {
@@ -65,18 +76,28 @@ class TDDSProblem extends AbstractDoubleProblem {
 			x[i] = solution.getVariableValue(i);
 		}
 
+		TileService tileService = new TileService();
 		// generate tiles using x[0] and x[1]
 		BigDecimal latRange = new BigDecimal(x[0]);
 		BigDecimal lonRange = new BigDecimal(x[1]);
+		Log.info("Evaluate solution LatRange=" + latRange + " \tLonRange=" + lonRange);
 		long beginComputingTiles = System.currentTimeMillis();
-		//tileService.computeMapWithNewTileDef(latRange, lonRange);
-		Log.debug("Time for computing tiles " + (System.currentTimeMillis() - beginComputingTiles));
+		String resp = tileService.computeMap(latRange, lonRange);
+		long time = System.currentTimeMillis() - beginComputingTiles;
+		Log.info("Time for computing tiles " + time + "(" + resp + ")");
+		Pair<BigDecimal, BigDecimal> range = tileService.getRange();
+		try {
+			rangeWriter.write(range.getFirst() + ";" + range.getSecond() + ";" + time + "\n");
+			rangeWriter.flush();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 
 		// calculate fx as mean time (for resolving n routes)
-		// TODO save times!
-		routing();
+		fx = routing(range.getFirst() + ";" + range.getSecond());
 		// Asigno el valor de la función de fitness
 		solution.setObjective(0, fx);
+		Log.info("Solution"+range.toString()+" fitness="+fx);
 	}
 
 	// Esta función es utilizada por el algoritmo para crear la población
@@ -109,24 +130,50 @@ class TDDSProblem extends AbstractDoubleProblem {
 		this.upper = upper;
 	}
 
-	private double routing() {
-		long aggTime = 0l;
+	private double routing(String range) {
+		long aggFitnessTime = 0l;
+		//long aggTotalTime = 0l;
+		//long aggSearchTime = 0l;
+		TileService tileService = new TileService();
 		for (int i = 0; i < origDests.size(); i++) {
 			Pair<GeoStreetInterface, GeoStreetInterface> p = origDests.get(i);
-			System.out.println("Setting graph " + System.currentTimeMillis());
+			Log.debug("Setting graph " + System.currentTimeMillis());
+			long begin = System.currentTimeMillis();
 			GraphInterface graph = tileService.getTile(p.getFirst().getLatitude1(), p.getFirst().getLongitude1(),
 					p.getSecond().getLatitude1(), p.getSecond().getLongitude1());
 			AlgorithmInterface alg = new Dijkstra();
 			alg.setGraph(graph);
 
-			long begin = System.currentTimeMillis();
-			// LinkedList<IntersectionInterface> path =
-			alg.getPath(p.getFirst().getFromIntersection(), p.getSecond().getFromIntersection());
+			long beginSearch = System.currentTimeMillis();
+			LinkedList<IntersectionInterface> path = alg.getPath(p.getFirst().getFromIntersection(),
+					p.getSecond().getFromIntersection());
 			long end = System.currentTimeMillis();
-			Log.debug("Route " + i + " time " + (end - begin));
-			aggTime += end - begin;
-		}
+			long time = end - begin;
+			long searchTime = end - beginSearch;
+			long fitnessTime = time;
 
-		return (double) (aggTime / origDests.size());
+			boolean found = !path.isEmpty();
+			if (!found) {
+				fitnessTime += PENALTY;
+			}
+			aggFitnessTime += fitnessTime;
+			//aggTotalTime += time;
+			//aggSearchTime += searchTime;
+
+			Log.debug("Route " + i + " time " + time + " found " + found);
+			try {
+				routeWriter.write(
+						range + ";" + i + ";" + time + ";" + searchTime + ";" + fitnessTime + ";" + found + "\n");
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+				
+		try {
+			routeWriter.flush();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		return (double) (aggFitnessTime / origDests.size());
 	}
 }
