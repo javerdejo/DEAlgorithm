@@ -2,19 +2,19 @@
 <!DOCTYPE log SYSTEM "logger.dtd">
 <log>
 <record>
-  <date>2017-01-08T18:40:33</date>
-  <millis>1483897233391</millis>
+  <date>2017-01-20T04:37:53</date>
+  <millis>1484883473558</millis>
   <sequence>17</sequence>
   <logger>jMetal</logger>
   <level>INFO</level>
   <class>org.uma.jmetal.runner.AbstractAlgorithmRunner</class>
   <method>printFinalSolutionSet</method>
   <thread>1</thread>
-  <message>Random seed: 1483828559716</message>
+  <message>Random seed: 1484847997542</message>
 </record>
 <record>
-  <date>2017-01-08T18:40:33</date>
-  <millis>1483897233395</millis>
+  <date>2017-01-20T04:37:53</date>
+  <millis>1484883473560</millis>
   <sequence>18</sequence>
   <logger>jMetal</logger>
   <level>INFO</level>
@@ -24,8 +24,8 @@
   <message>Objectives values have been written to file FUN.tsv</message>
 </record>
 <record>
-  <date>2017-01-08T18:40:33</date>
-  <millis>1483897233396</millis>
+  <date>2017-01-20T04:37:53</date>
+  <millis>1484883473561</millis>
   <sequence>19</sequence>
   <logger>jMetal</logger>
   <level>INFO</level>

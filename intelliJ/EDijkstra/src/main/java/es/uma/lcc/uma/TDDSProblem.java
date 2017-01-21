@@ -4,6 +4,8 @@ import org.uma.jmetal.problem.impl.AbstractDoubleProblem;
 import org.uma.jmetal.solution.DoubleSolution;
 import org.uma.jmetal.solution.impl.DefaultDoubleSolution;
 
+import com.google.common.collect.HashBasedTable;
+import com.google.common.collect.Table;
 import com.iblue.model.GeoStreetInterface;
 import com.iblue.model.IntersectionInterface;
 import com.iblue.model.db.service.TileService;
@@ -27,14 +29,17 @@ class TDDSProblem extends AbstractDoubleProblem {
 	private int numberOfVariables;
 	private double lower;
 	private double upper;
-	//private TileService tileService;
+	// private TileService tileService;
 	private List<Pair<GeoStreetInterface, GeoStreetInterface>> origDests;
 	private BufferedWriter routeWriter;
 	private BufferedWriter rangeWriter;
+	private BufferedWriter fitnessWriter;
+	private Table<BigDecimal, BigDecimal, Double> fits;
+	private boolean cache = true;
 
 	public TDDSProblem(int numberOfVariables, double lower, double upper,
 			List<Pair<GeoStreetInterface, GeoStreetInterface>> origDests, BufferedWriter routeWriter,
-			BufferedWriter rangeWriter) {
+			BufferedWriter rangeWriter, BufferedWriter fitnessWriter) {
 		this.numberOfVariables = numberOfVariables;
 		this.setLower(lower);
 		this.upper = upper;
@@ -47,6 +52,7 @@ class TDDSProblem extends AbstractDoubleProblem {
 
 		List<Double> lowerLimit = new ArrayList<Double>();
 		List<Double> upperLimit = new ArrayList<Double>();
+		this.fits = HashBasedTable.create();
 
 		// Asigno los limites superior e inferior a cada variable
 		for (int i = 0; i < getNumberOfVariables(); i++) {
@@ -57,10 +63,11 @@ class TDDSProblem extends AbstractDoubleProblem {
 		setLowerLimit(lowerLimit);
 		setUpperLimit(upperLimit);
 
-		//tileService = new TileService();
+		// tileService = new TileService();
 
 		this.rangeWriter = rangeWriter;
 		this.routeWriter = routeWriter;
+		this.fitnessWriter = fitnessWriter;
 	}
 
 	public void evaluate(DoubleSolution solution) {
@@ -69,7 +76,7 @@ class TDDSProblem extends AbstractDoubleProblem {
 		double[] x = new double[getNumberOfVariables()];
 
 		// Almacena el valor de la función de fitness
-		double fx = 0;
+		double fx = 0d;
 
 		// Guardo los valores de las variables del individuo en un arreglo local
 		for (int i = 0; i < solution.getNumberOfVariables(); i++) {
@@ -78,26 +85,44 @@ class TDDSProblem extends AbstractDoubleProblem {
 
 		TileService tileService = new TileService();
 		// generate tiles using x[0] and x[1]
-		BigDecimal latRange = new BigDecimal(x[0]);
-		BigDecimal lonRange = new BigDecimal(x[1]);
+		BigDecimal latRange = new BigDecimal(x[0]).setScale(7, BigDecimal.ROUND_HALF_DOWN);
+		BigDecimal lonRange = new BigDecimal(x[1]).setScale(7, BigDecimal.ROUND_HALF_DOWN);
 		Log.info("Evaluate solution LatRange=" + latRange + " \tLonRange=" + lonRange);
-		long beginComputingTiles = System.currentTimeMillis();
-		String resp = tileService.computeMap(latRange, lonRange);
-		long time = System.currentTimeMillis() - beginComputingTiles;
-		Log.info("Time for computing tiles " + time + "(" + resp + ")");
-		Pair<BigDecimal, BigDecimal> range = tileService.getRange();
+		if (fits.contains(latRange, lonRange)) {
+			// due to rounding, solution has been already evaluated
+			fx = fits.get(latRange, lonRange);
+			Log.info("Solution already computed");
+		} else {
+			// new solution
+			long beginComputingTiles = System.currentTimeMillis();
+			String resp = tileService.computeMap(latRange, lonRange);
+			long time = System.currentTimeMillis() - beginComputingTiles;
+			Log.info("Time for computing tiles " + time + "(" + resp + ")");
+			Pair<BigDecimal, BigDecimal> range = tileService.getRange();
+			try {
+				rangeWriter.write(range.getFirst() + ";" + range.getSecond() + ";" + time + "\n");
+				rangeWriter.flush();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+
+			// calculate fx as mean time (for resolving n routes)
+			fx = routing(range.getFirst() + ";" + range.getSecond());
+		}
+		// Asigno el valor de la función de fitness
+		solution.setObjective(0, fx);
+		if (cache) {
+			fits.put(latRange, lonRange, fx);
+		}
+		
+		Log.info("Solution (" + latRange + ", " + lonRange + ") fitness=" + fx);
 		try {
-			rangeWriter.write(range.getFirst() + ";" + range.getSecond() + ";" + time + "\n");
-			rangeWriter.flush();
+			fitnessWriter.write(latRange + ";"
+					+ lonRange + ";" + fx + "\n");
+			fitnessWriter.flush();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-
-		// calculate fx as mean time (for resolving n routes)
-		fx = routing(range.getFirst() + ";" + range.getSecond());
-		// Asigno el valor de la función de fitness
-		solution.setObjective(0, fx);
-		Log.info("Solution"+range.toString()+" fitness="+fx);
 	}
 
 	// Esta función es utilizada por el algoritmo para crear la población
@@ -132,8 +157,8 @@ class TDDSProblem extends AbstractDoubleProblem {
 
 	private double routing(String range) {
 		long aggFitnessTime = 0l;
-		//long aggTotalTime = 0l;
-		//long aggSearchTime = 0l;
+		// long aggTotalTime = 0l;
+		// long aggSearchTime = 0l;
 		TileService tileService = new TileService();
 		for (int i = 0; i < origDests.size(); i++) {
 			Pair<GeoStreetInterface, GeoStreetInterface> p = origDests.get(i);
@@ -157,8 +182,8 @@ class TDDSProblem extends AbstractDoubleProblem {
 				fitnessTime += PENALTY;
 			}
 			aggFitnessTime += fitnessTime;
-			//aggTotalTime += time;
-			//aggSearchTime += searchTime;
+			// aggTotalTime += time;
+			// aggSearchTime += searchTime;
 
 			Log.debug("Route " + i + " time " + time + " found " + found);
 			try {
@@ -168,12 +193,26 @@ class TDDSProblem extends AbstractDoubleProblem {
 				e.printStackTrace();
 			}
 		}
-				
+
 		try {
 			routeWriter.flush();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 		return (double) (aggFitnessTime / origDests.size());
+	}
+	
+	public void setCache(boolean cache) {
+		this.cache = cache;
+	}
+	
+	public void addCache(Table<BigDecimal, BigDecimal, Double> cache) {
+		this.cache = true;
+		this.fits.putAll(cache);
+		Log.info("Cache added (actual size="+fits.size()+")");
+	}
+	
+	public Table<BigDecimal, BigDecimal, Double> getCache(){
+		return fits;
 	}
 }

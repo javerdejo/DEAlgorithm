@@ -10,6 +10,7 @@
 	<properties>
 		<jmetal.version>5.0</jmetal.version>
 		<iblue.service.version>1.0.2-RELEASE</iblue.service.version>
+		<guava.version>20.0-rc1</guava.version>
 	</properties>
 	<dependencies>
 		<!-- https://mvnrepository.com/artifact/org.uma.jmetal/jmetal-core -->
@@ -44,6 +45,14 @@
 			<artifactId>service</artifactId>
 			<version>${iblue.service.version}</version>
 		</dependency>
+		
+				<!-- Guava -->
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>${guava.version}</version>
+		</dependency>
+		
 		
 	</dependencies>
 
