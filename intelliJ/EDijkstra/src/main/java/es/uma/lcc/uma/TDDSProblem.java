@@ -98,7 +98,9 @@ class TDDSProblem extends AbstractDoubleProblem {
 			String resp = tileService.computeMap(latRange, lonRange);
 			long time = System.currentTimeMillis() - beginComputingTiles;
 			Log.info("Time for computing tiles " + time + "(" + resp + ")");
-			Pair<BigDecimal, BigDecimal> range = tileService.getRange();
+			Pair<List<BigDecimal>, List<BigDecimal>> ranges = tileService.getRanges();
+			Pair<BigDecimal, BigDecimal> range = new Pair<BigDecimal, BigDecimal>(ranges.getFirst().get(0),
+					ranges.getSecond().get(0));
 			try {
 				rangeWriter.write(range.getFirst() + ";" + range.getSecond() + ";" + time + "\n");
 				rangeWriter.flush();
@@ -114,11 +116,10 @@ class TDDSProblem extends AbstractDoubleProblem {
 		if (cache) {
 			fits.put(latRange, lonRange, fx);
 		}
-		
+
 		Log.info("Solution (" + latRange + ", " + lonRange + ") fitness=" + fx);
 		try {
-			fitnessWriter.write(latRange + ";"
-					+ lonRange + ";" + fx + "\n");
+			fitnessWriter.write(latRange + ";" + lonRange + ";" + fx + "\n");
 			fitnessWriter.flush();
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -201,18 +202,18 @@ class TDDSProblem extends AbstractDoubleProblem {
 		}
 		return (double) (aggFitnessTime / origDests.size());
 	}
-	
+
 	public void setCache(boolean cache) {
 		this.cache = cache;
 	}
-	
+
 	public void addCache(Table<BigDecimal, BigDecimal, Double> cache) {
 		this.cache = true;
 		this.fits.putAll(cache);
-		Log.info("Cache added (actual size="+fits.size()+")");
+		Log.info("Cache added (actual size=" + fits.size() + ")");
 	}
-	
-	public Table<BigDecimal, BigDecimal, Double> getCache(){
+
+	public Table<BigDecimal, BigDecimal, Double> getCache() {
 		return fits;
 	}
 }
